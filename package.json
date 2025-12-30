@@ -1,0 +1,11 @@
+{
+  "name": "langdeck",
+  "private": true,
+  "type": "commonjs",
+  "scripts": {
+    "pipeline": "node pipeline.js"
+  },
+  "dependencies": {
+    "anki-apkg-export": "^4.0.1"
+  }
+}
