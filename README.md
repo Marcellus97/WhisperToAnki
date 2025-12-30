@@ -4,19 +4,25 @@ Minimal Node.js pipeline to turn a single-speaker Italian audio file into a time
 
 ## Quick start
 
-1) Clone/build whisper.cpp and download a model (default: base):
+1) Install system dependencies:
+
+```bash
+brew install cmake ffmpeg
+```
+
+2) Clone/build whisper.cpp and download a model (default: base):
 
 ```bash
 ./setup-whisper.sh
 ```
 
-2) Install the Anki exporter dependency:
+3) Install the Anki exporter dependency:
 
 ```bash
 npm install
 ```
 
-3) Run the full pipeline with a single audio file:
+4) Run the full pipeline with a single audio file:
 
 ```bash
 node pipeline.js full-default episode.mp3
@@ -110,6 +116,6 @@ node pipeline.js download-model <model> [models_dir] [--whisper-dir <path>]
 
 ## Requirements
 
-- `ffmpeg`
-- `cmake` (for whisper.cpp build)
+- `ffmpeg` (install with `brew install ffmpeg`)
+- `cmake` (install with `brew install cmake`)
 - Node.js 18+ recommended
