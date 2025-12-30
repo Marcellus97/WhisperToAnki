@@ -16,7 +16,7 @@ brew install cmake ffmpeg
 ./setup-whisper.sh
 ```
 
-3) Install the Anki exporter dependency:
+3) Install the Node dependency:
 
 ```bash
 npm install
@@ -66,7 +66,7 @@ node pipeline.js transcribe <input_wav> <output_words_json> --model <path> [--wh
 
 - Runs whisper.cpp and normalizes the output into a word-level `transcript.words.json`.
 - Default whisper.cpp binary is `whisper.cpp/bin/whisper-cli` if present, otherwise `whisper.cpp/build/bin/whisper-cli`.
-- Default whisper flags: `-t 4 -p 1 -bs 5 -bo 5`.
+- Default whisper flags: `-t 4 -p 1 -bs 5 -bo 5 -dtw <preset>` plus JSON full output, where the preset is derived from the model filename (e.g. `ggml-base.bin` -> `base`).
 - Use `--extra` to add flags, `--no-defaults` to disable defaults.
 
 ### segment
@@ -93,7 +93,7 @@ node pipeline.js clip <input_media> <segments_json> <clips_dir> [--reencode]
 node pipeline.js anki <segments_json> <clips_dir> <output_apkg> --deck-name "Name" [--episode "Episode"]
 ```
 
-- Builds an Anki deck where the front shows the phrase and plays audio, and the back shows raw text plus episode metadata.
+- Builds an Anki deck using the system `sqlite3` and `zip` tools (no in-memory SQL.js).
 
 ### download-model
 
@@ -118,4 +118,5 @@ node pipeline.js download-model <model> [models_dir] [--whisper-dir <path>]
 
 - `ffmpeg` (install with `brew install ffmpeg`)
 - `cmake` (install with `brew install cmake`)
+- `sqlite3` and `zip` (preinstalled on macOS)
 - Node.js 18+ recommended
