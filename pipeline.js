@@ -8,6 +8,7 @@ const { spawnSync } = require("child_process");
 function usage() {
   const text = `
 Usage:
+  node pipeline.js full-default <input_audio> [--out-dir <path>] [--deck-name "Name"] [--episode "Episode"]
   node pipeline.js preprocess <input_media> <output_wav>
   node pipeline.js download-model <model> [models_dir] [--whisper-dir <path>]
   node pipeline.js transcribe <input_wav> <output_words_json> --whisper-bin <path> --model <path> [--language it] [--extra "..."] [--no-defaults]
@@ -49,6 +50,10 @@ function run(cmd, cmdArgs, opts = {}) {
   if (res.status !== 0) {
     throw new Error(`Command failed: ${cmd} ${cmdArgs.join(" ")}`);
   }
+}
+
+function log(message) {
+  console.log(`[pipeline] ${message}`);
 }
 
 function ensureDir(dir) {
@@ -248,6 +253,57 @@ function commandDownloadModel(args, flags) {
   run("sh", [scriptPath, model, modelsDir]);
 }
 
+function commandFullDefault(args, flags) {
+  if (args.length < 1) usage(), process.exit(1);
+  const [inputMp3] = args;
+  const baseName = path.basename(inputMp3).replace(path.extname(inputMp3), "");
+  const outDir = flags["out-dir"] || path.join(process.cwd(), "out", baseName);
+  const deckName = flags["deck-name"] || "Italian Podcast";
+  const episode = flags.episode || baseName;
+
+  const whisperDir = path.join(process.cwd(), "whisper.cpp");
+  const whisperBin = path.join(whisperDir, "bin", "whisper-cli");
+  const modelPath = path.join(whisperDir, "models", "ggml-base.bin");
+
+  ensureDir(outDir);
+  const wavPath = path.join(outDir, `${baseName}.wav`);
+  const wordsJsonPath = path.join(outDir, "transcript.words.json");
+  const segmentsJsonPath = path.join(outDir, "segments.json");
+  const clipsDir = path.join(outDir, "clips");
+  const deckPath = path.join(outDir, "deck.apkg");
+
+  if (!fs.existsSync(whisperBin)) {
+    throw new Error(`whisper.cpp binary not found at ${whisperBin}. Run ./setup-whisper.sh first.`);
+  }
+
+  if (!fs.existsSync(modelPath)) {
+    log("Model not found, downloading ggml-base...");
+    commandDownloadModel(["base", path.join(whisperDir, "models")], { "whisper-dir": whisperDir });
+  }
+
+  log("Preprocessing audio...");
+  commandPreprocess([inputMp3, wavPath], {});
+
+  log("Transcribing with whisper.cpp...");
+  commandTranscribe([wavPath, wordsJsonPath], {
+    "whisper-bin": whisperBin,
+    model: modelPath,
+    language: "it",
+  });
+
+  log("Segmenting transcript...");
+  commandSegment([wordsJsonPath, segmentsJsonPath], {});
+
+  log("Clipping audio segments...");
+  commandClip([inputMp3, segmentsJsonPath, clipsDir], { reencode: true });
+
+  log("Building Anki deck...");
+  return commandAnki([segmentsJsonPath, clipsDir, deckPath], {
+    "deck-name": deckName,
+    episode,
+  });
+}
+
 function commandSegment(args, flags) {
   if (args.length < 2) usage(), process.exit(1);
   const [inputWordsJson, outputSegmentsJson] = args;
@@ -323,6 +379,7 @@ async function main() {
   }
 
   try {
+    if (cmd === "full-default") return commandFullDefault(args, flags);
     if (cmd === "download-model") return commandDownloadModel(args, flags);
     if (cmd === "preprocess") return commandPreprocess(args, flags);
     if (cmd === "transcribe") return commandTranscribe(args, flags);
