@@ -59,7 +59,7 @@ node pipeline.js transcribe <input_wav> <output_words_json> --model <path> [--wh
 ```
 
 - Runs whisper.cpp and normalizes the output into a word-level `transcript.words.json`.
-- Default whisper.cpp binary is `whisper.cpp/bin/whisper-cli` if present.
+- Default whisper.cpp binary is `whisper.cpp/bin/whisper-cli` if present, otherwise `whisper.cpp/build/bin/whisper-cli`.
 - Default whisper flags: `-t 4 -p 1 -bs 5 -bo 5`.
 - Use `--extra` to add flags, `--no-defaults` to disable defaults.
 

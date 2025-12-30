@@ -200,11 +200,18 @@ function commandPreprocess(args) {
   run("ffmpeg", ["-i", input, "-ac", "1", "-ar", "16000", "-vn", output]);
 }
 
+function resolveWhisperBin(explicitPath) {
+  if (explicitPath) return explicitPath;
+  const primary = path.join(process.cwd(), "whisper.cpp", "bin", "whisper-cli");
+  if (fs.existsSync(primary)) return primary;
+  const fallback = path.join(process.cwd(), "whisper.cpp", "build", "bin", "whisper-cli");
+  return fallback;
+}
+
 function commandTranscribe(args, flags) {
   if (args.length < 2) usage(), process.exit(1);
   const [inputWav, outputWordsJson] = args;
-  const defaultWhisperBin = path.join(process.cwd(), "whisper.cpp", "bin", "whisper-cli");
-  const whisperBin = flags["whisper-bin"] || defaultWhisperBin;
+  const whisperBin = resolveWhisperBin(flags["whisper-bin"]);
   const model = flags.model;
   const language = flags.language || "it";
   const defaultFlags = ["-t", "4", "-p", "1", "-bs", "5", "-bo", "5"];
@@ -262,7 +269,7 @@ function commandFullDefault(args, flags) {
   const episode = flags.episode || baseName;
 
   const whisperDir = path.join(process.cwd(), "whisper.cpp");
-  const whisperBin = path.join(whisperDir, "bin", "whisper-cli");
+  const whisperBin = resolveWhisperBin();
   const modelPath = path.join(whisperDir, "models", "ggml-base.bin");
 
   ensureDir(outDir);
@@ -273,7 +280,9 @@ function commandFullDefault(args, flags) {
   const deckPath = path.join(outDir, "deck.apkg");
 
   if (!fs.existsSync(whisperBin)) {
-    throw new Error(`whisper.cpp binary not found at ${whisperBin}. Run ./setup-whisper.sh first.`);
+    throw new Error(
+      `whisper.cpp binary not found at ${whisperBin}. Run ./setup-whisper.sh first.`
+    );
   }
 
   if (!fs.existsSync(modelPath)) {
