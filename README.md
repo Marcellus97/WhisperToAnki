@@ -1,4 +1,4 @@
-# Langdeck
+# WhisperToAnki
 
 Minimal Node.js pipeline to turn a single-speaker Italian audio file into a timestamped, phrase-clipped Anki deck using whisper.cpp and ffmpeg.
 

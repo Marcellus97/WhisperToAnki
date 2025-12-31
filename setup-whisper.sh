@@ -26,6 +26,13 @@ else
   exit 1
 fi
 
+if [ -f "$TARGET_DIR/build/CMakeCache.txt" ]; then
+  if ! grep -q "$TARGET_DIR" "$TARGET_DIR/build/CMakeCache.txt"; then
+    echo "CMake cache points to a different path. Removing old build directory."
+    rm -rf "$TARGET_DIR/build"
+  fi
+fi
+
 make -j
 
 if [ -x "$TARGET_DIR/models/download-ggml-model.sh" ]; then
