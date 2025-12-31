@@ -72,7 +72,7 @@ node pipeline.js transcribe <input_wav> <output_words_json> --model <path> [--wh
 ### segment
 
 ```bash
-node pipeline.js segment <input_words_json> <output_segments_json> [--max-gap 0.45] [--max-words 12] [--max-duration 3.5]
+node pipeline.js segment <input_words_json> <output_segments_json> [--max-gap 0.8] [--max-words 20] [--max-duration 6.0] [--min-words 2]
 ```
 
 - Groups words into phrase segments without altering timestamps.

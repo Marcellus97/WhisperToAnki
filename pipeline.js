@@ -13,7 +13,7 @@ Usage:
   node pipeline.js preprocess <input_media> <output_wav>
   node pipeline.js download-model <model> [models_dir] [--whisper-dir <path>]
   node pipeline.js transcribe <input_wav> <output_words_json> --whisper-bin <path> --model <path> [--language it] [--extra "..."] [--no-defaults]
-  node pipeline.js segment <input_words_json> <output_segments_json> [--max-gap 0.45] [--max-words 12] [--max-duration 3.5]
+  node pipeline.js segment <input_words_json> <output_segments_json> [--max-gap 0.8] [--max-words 20] [--max-duration 6.0] [--min-words 2]
   node pipeline.js clip <input_media> <segments_json> <clips_dir> [--reencode]
   node pipeline.js anki <segments_json> <clips_dir> <output_apkg> --deck-name "Name" [--episode "Episode"]
 
@@ -423,6 +423,10 @@ function joinWords(words) {
   return text.replace(/\s+([.,!?;:])/g, "$1");
 }
 
+function cleanTokenText(tokenText) {
+  return tokenText.replace(/\[_TT_\d+\]/g, "");
+}
+
 function getOffsetSeconds(obj) {
   if (!obj || !obj.offsets) return null;
   const from = Number(obj.offsets.from);
@@ -436,7 +440,7 @@ function tokensToWords(tokens) {
   let current = null;
 
   for (const token of tokens) {
-    const tokenText = token.text || "";
+    const tokenText = cleanTokenText(token.text || "");
     const trimmed = tokenText.replace(/^\s+/, "");
     if (!trimmed) {
       continue;
@@ -518,9 +522,10 @@ function buildWordsJson(rawWhisperJsonPath, outputWordsJsonPath, language) {
 
 function segmentWords(wordsJson, options) {
   const words = wordsJson.words || [];
-  const maxGap = Number(options.maxGap ?? 0.45);
-  const maxWords = Number(options.maxWords ?? 12);
-  const maxDuration = Number(options.maxDuration ?? 3.5);
+  const maxGap = Number(options.maxGap ?? 0.8);
+  const maxWords = Number(options.maxWords ?? 20);
+  const maxDuration = Number(options.maxDuration ?? 6.0);
+  const minWords = Number(options.minWords ?? 2);
 
   const fillers = new Set([
     "eh",
@@ -576,11 +581,20 @@ function segmentWords(wordsJson, options) {
     const prev = current[current.length - 1];
     const gap = w.start - prev.end;
     const duration = w.end - current[0].start;
-    if (gap >= maxGap || current.length >= maxWords || duration >= maxDuration) {
+    if (gap >= maxGap && current.length >= minWords) {
       flush();
     }
     current.push(w);
     currentIndices.push(i);
+    const token = w.w || "";
+    const endsSentence = /[.!?]["')\]]?$/.test(token);
+    if (endsSentence) {
+      flush();
+    } else if (current.length >= maxWords && current.length >= minWords) {
+      flush();
+    } else if (w.end - current[0].start >= maxDuration && current.length >= minWords) {
+      flush();
+    }
   }
   flush();
 
@@ -711,7 +725,12 @@ function commandFullDefault(args, flags) {
   });
 
   log("Segmenting transcript...");
-  commandSegment([wordsJsonPath, segmentsJsonPath], {});
+  commandSegment([wordsJsonPath, segmentsJsonPath], {
+    "max-gap": "0.8",
+    "max-words": "20",
+    "max-duration": "6.0",
+    "min-words": "2",
+  });
 
   log("Clipping audio segments...");
   commandClip([inputMp3, segmentsJsonPath, clipsDir], { reencode: true });
@@ -731,6 +750,7 @@ function commandSegment(args, flags) {
     maxGap: flags["max-gap"],
     maxWords: flags["max-words"],
     maxDuration: flags["max-duration"],
+    minWords: flags["min-words"],
   });
   ensureDir(path.dirname(outputSegmentsJson));
   writeJson(outputSegmentsJson, segments);
