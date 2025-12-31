@@ -4,7 +4,9 @@ Minimal Node.js pipeline to turn a single-speaker Italian audio file into a time
 
 ## Example usage video
 
-<video src="whisperankiexample.mov" autoplay muted loop playsinline controls></video>
+
+https://github.com/user-attachments/assets/b81e8699-1a84-46d1-a2f1-b4eed71eee79
+
 
 ## Quick start
 
