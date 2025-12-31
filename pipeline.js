@@ -721,7 +721,7 @@ function commandFullDefault(args, flags) {
   commandTranscribe([wavPath, wordsJsonPath], {
     "whisper-bin": whisperBin,
     model: modelPath,
-    language: "it",
+    language: "auto",
   });
 
   log("Segmenting transcript...");
