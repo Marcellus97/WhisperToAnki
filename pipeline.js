@@ -424,7 +424,7 @@ function joinWords(words) {
 }
 
 function cleanTokenText(tokenText) {
-  return tokenText.replace(/\[_TT_\d+\]/g, "");
+  return tokenText.replace(/\[_TT_\d+\]/g, "").replace(/\[_BEG_\]/g, "");
 }
 
 function getOffsetSeconds(obj) {
@@ -470,7 +470,7 @@ function tokensToWords(tokens) {
 function flattenWhisperWords(raw) {
   if (Array.isArray(raw.words)) {
     return raw.words.map((w) => ({
-      w: w.w || w.word || w.text || "",
+      w: cleanTokenText(w.w || w.word || w.text || ""),
       start: Number(w.start),
       end: Number(w.end),
     }));
@@ -481,7 +481,7 @@ function flattenWhisperWords(raw) {
       if (!Array.isArray(seg.words)) continue;
       for (const w of seg.words) {
         out.push({
-          w: w.w || w.word || w.text || "",
+          w: cleanTokenText(w.w || w.word || w.text || ""),
           start: Number(w.start),
           end: Number(w.end),
         });
