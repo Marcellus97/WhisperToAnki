@@ -2,6 +2,10 @@
 
 Minimal Node.js pipeline to turn a single-speaker Italian audio file into a timestamped, phrase-clipped Anki deck using whisper.cpp and ffmpeg.
 
+## Example usage video
+
+<video src="whisperankiexample.mov" autoplay muted loop playsinline controls></video>
+
 ## Quick start
 
 1) Install system dependencies:
